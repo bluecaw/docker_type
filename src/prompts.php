@@ -27,6 +27,7 @@ function h($value) {
 <body>
     <h1>タイピング練習</h1>
     <p><a href="history.php">練習履歴を見る</a></p>
+    <p><a href="add_prompt.php">お題を追加</a></p>
 
     <h2>お題一覧</h2>
     <?php if (!$prompts): ?>
