@@ -7,7 +7,9 @@ $pdo = new PDO(
 );
 
 $prompts = $pdo->query(
-    'SELECT id, title, body, difficulty FROM typing_prompts ORDER BY id'
+    'SELECT id, prompt_number, title, difficulty
+     FROM typing_prompts
+     ORDER BY prompt_number, id'
 )->fetchAll(PDO::FETCH_ASSOC);
 
 function h($value) {
@@ -18,11 +20,8 @@ function h($value) {
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css">
     <title>タイピング練習</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        li { margin: 12px 0; }
-    </style>
 </head>
 <body>
     <h1>タイピング練習</h1>
@@ -33,15 +32,30 @@ function h($value) {
     <?php if (!$prompts): ?>
         <p>お題がありません。</p>
     <?php else: ?>
-        <ul>
-            <?php foreach ($prompts as $prompt): ?>
-                <li>
-                    <strong><?= h($prompt['title']) ?></strong>
-                    （<?= h($prompt['difficulty']) ?>）
-                    <a href="typing.php?id=<?= (int) $prompt['id'] ?>">練習する</a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
+        <table>
+            <thead>
+                <tr>
+                    <th>問題No.</th>
+                    <th>タイトル</th>
+                    <th>難易度</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($prompts as $prompt): ?>
+                    <tr>
+                        <td><?= (int) $prompt['prompt_number'] ?></td>
+                        <td><?= h($prompt['title']) ?></td>
+                        <td><?= h($prompt['difficulty']) ?></td>
+                        <td>
+                            <a href="typing.php?id=<?= (int) $prompt['id'] ?>">練習する</a>
+                            |
+                            <a href="edit_prompt.php?id=<?= (int) $prompt['id'] ?>">編集</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php endif; ?>
 </body>
 </html>

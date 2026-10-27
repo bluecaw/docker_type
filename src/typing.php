@@ -64,13 +64,9 @@ $body = htmlspecialchars($prompt['body'], ENT_QUOTES, 'UTF-8');
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css">
     <title><?= $title ?> - タイピング練習</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        #prompt { font-size: 1.5rem; line-height: 1.8; padding: 16px; background: #f2f5f8; }
-        textarea { box-sizing: border-box; width: 100%; min-height: 120px; font-size: 1.2rem; padding: 12px; }
-        #result { margin-top: 20px; font-weight: bold; }
-    </style>
+    
 </head>
 <body>
     <h1><?= $title ?></h1>

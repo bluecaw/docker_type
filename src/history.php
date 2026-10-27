@@ -6,6 +6,8 @@ $pdo = new PDO(
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
 );
 
+$pdo->exec("SET time_zone = '+09:00'");
+
 $sql = '
     SELECT
         r.created_at,
@@ -29,13 +31,9 @@ function h($value) {
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css">
     <title>練習履歴 - タイピング練習</title>
-    <style>
-        body { font-family: sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f2f5f8; }
-    </style>
+    
 </head>
 <body>
     <h1>練習履歴</h1>

@@ -34,38 +34,36 @@ function makeTopicTitle($body) {
 
     foreach ($rules as [$keywords, $title]) {
         $matches = true;
-
         foreach ($keywords as $keyword) {
             if (mb_strpos($body, $keyword) === false) {
                 $matches = false;
                 break;
             }
         }
-
         if ($matches) {
             return $title;
         }
     }
 
-    $titleSource = preg_replace('/\s+/u', ' ', trim($body));
-    $characters = preg_split('//u', $titleSource, -1, PREG_SPLIT_NO_EMPTY);
-
+    $source = preg_replace('/\s+/u', ' ', trim($body));
+    $characters = preg_split('//u', $source, -1, PREG_SPLIT_NO_EMPTY);
     if ($characters === false) {
         return 'タイピング練習';
     }
 
     $title = implode('', array_slice($characters, 0, 18));
-
     if (count($characters) > 18) {
         $title .= '…';
     }
-
     return $title !== '' ? $title : 'タイピング練習';
 }
 
 $error = '';
 $body = '';
 $difficulty = 'easy';
+$nextNumber = (int) $pdo->query(
+    'SELECT COALESCE(MAX(prompt_number), 0) + 1 FROM typing_prompts'
+)->fetchColumn();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $body = trim($_POST['body'] ?? '');
@@ -76,25 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!in_array($difficulty, ['easy', 'normal', 'hard'], true)) {
         $error = '難易度を選び直してください。';
     } else {
-        $titles = $pdo->query(
-            'SELECT title FROM typing_prompts WHERE title LIKE "練習%"'
-        )->fetchAll(PDO::FETCH_COLUMN);
+        $pdo->beginTransaction();
 
-        $maxNumber = 0;
-        foreach ($titles as $existingTitle) {
-            if (preg_match('/^練習([0-9]+)：/u', $existingTitle, $matches)) {
-                $maxNumber = max($maxNumber, (int) $matches[1]);
-            }
-        }
-
-        $number = $maxNumber + 1;
-        $topicTitle = makeTopicTitle($body);
-        $title = '練習' . $number . '：' . $topicTitle;
+        $number = (int) $pdo->query(
+            'SELECT COALESCE(MAX(prompt_number), 0) + 1 FROM typing_prompts'
+        )->fetchColumn();
 
         $stmt = $pdo->prepare(
-            'INSERT INTO typing_prompts (title, body, difficulty) VALUES (?, ?, ?)'
+            'INSERT INTO typing_prompts (prompt_number, title, body, difficulty)
+             VALUES (?, ?, ?, ?)'
         );
-        $stmt->execute([$title, $body, $difficulty]);
+        $stmt->execute([$number, makeTopicTitle($body), $body, $difficulty]);
+
+        $pdo->commit();
 
         header('Location: prompts.php?added=1');
         exit;
@@ -105,18 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css">
     <title>お題を追加 - タイピング練習</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        label { display: block; margin-top: 16px; }
-        textarea, select { box-sizing: border-box; width: 100%; padding: 10px; font: inherit; }
-        textarea { min-height: 140px; }
-        button { margin-top: 20px; padding: 10px 18px; font: inherit; cursor: pointer; }
-        .error { color: #b00020; }
-    </style>
 </head>
 <body>
     <h1>お題を追加</h1>
+    <p>次の問題No.は <?= $nextNumber ?> です。番号は登録時に自動で決まります。</p>
 
     <?php if ($error !== ''): ?>
         <p class="error"><?= h($error) ?></p>
@@ -125,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post">
         <label for="body">練習する文章</label>
         <textarea id="body" name="body" required><?= h($body) ?></textarea>
-        <p>文章のキーワードからタイトルを自動で作成します。</p>
+        <p>本文のキーワードからタイトルを自動で作成します。</p>
 
         <label for="difficulty">難易度</label>
         <select id="difficulty" name="difficulty">
